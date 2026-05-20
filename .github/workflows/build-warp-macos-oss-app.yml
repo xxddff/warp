@@ -1,0 +1,74 @@
+name: Build Warp macOS OSS App
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Warp tag to build
+        required: true
+        default: v0.2026.05.20.09.21.stable_00
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build WarpOss.app
+    runs-on: macos-15
+    timeout-minutes: 120
+
+    env:
+      CARGO_TERM_COLOR: always
+      WARP_SKIP_COMMON_SKILLS_INSTALL: "1"
+
+    steps:
+      - name: Checkout Warp source
+        uses: actions/checkout@v4
+        with:
+          repository: warpdotdev/warp
+          ref: ${{ inputs.tag }}
+          lfs: true
+
+      - name: Show runner environment
+        run: |
+          sw_vers
+          uname -m
+          xcodebuild -version
+          df -h .
+
+      - name: Install Rust toolchain
+        run: |
+          if ! command -v cargo >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+            export PATH="$HOME/.cargo/bin:$PATH"
+          fi
+          rustup toolchain install 1.92.0 --profile minimal --component rustfmt --component clippy
+          rustup default 1.92.0
+          cargo --version
+          rustc --version
+
+      - name: Install build dependencies
+        run: |
+          brew install protobuf git-lfs
+          ./script/macos/install_build_deps || true
+          ./script/install_cargo_bundle
+
+      - name: Pull Git LFS objects
+        run: |
+          git lfs install --local
+          git lfs pull
+
+      - name: Build app bundle
+        run: |
+          ./script/run --release --dont-open
+          test -d target/release/bundle/osx/WarpOss.app
+          ditto -c -k --sequesterRsrc --keepParent \
+            target/release/bundle/osx/WarpOss.app \
+            WarpOss.app.zip
+
+      - name: Upload app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WarpOss.app-${{ inputs.tag }}
+          path: WarpOss.app.zip
