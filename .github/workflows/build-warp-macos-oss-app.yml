@@ -47,6 +47,13 @@ jobs:
           cargo --version
           rustc --version
 
+      - name: Restore Rust build cache
+        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+        with:
+          shared-key: macos-oss-app-release
+          cache-on-failure: true
+          save-if: ${{ github.ref == 'refs/heads/master' }}
+
       - name: Install build dependencies
         run: |
           brew install protobuf git-lfs
