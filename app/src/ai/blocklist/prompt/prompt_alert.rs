@@ -67,7 +67,6 @@ pub enum PromptAlertState {
     /// The user is offline (no connection).
     NoConnection,
     /// Telemetry is disabled and the user is on a free tier.
-    /// Free tier users must enable telemetry or upgrade to use AI features.
     TelemetryDisabledOnFreeTier,
     /// An anonymous user has reached a certain percentage of requests used.
     /// This doesn't use a primary text to avoid being too in-your-face.
@@ -134,21 +133,6 @@ impl PromptAlertView {
         // First, if the user is offline, no AI features will work.
         if !NetworkStatus::as_ref(app).is_online() {
             return PromptAlertState::NoConnection;
-        }
-
-        // Check if telemetry is disabled for free tier users.
-        // Free tier users must enable telemetry or upgrade to use AI features.
-        let privacy_settings = PrivacySettings::as_ref(app);
-        if !privacy_settings.is_telemetry_enabled {
-            // Fail safe: if billing status is unknown, assume paid to avoid showing confusing message to paying users
-            let is_on_paid_plan = UserWorkspaces::as_ref(app)
-                .current_workspace()
-                .map(|w| w.billing_metadata.is_user_on_paid_plan())
-                .unwrap_or(true);
-
-            if !is_on_paid_plan {
-                return PromptAlertState::TelemetryDisabledOnFreeTier;
-            }
         }
 
         let request_usage_model = AIRequestUsageModel::as_ref(app);

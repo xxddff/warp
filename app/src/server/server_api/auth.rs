@@ -454,10 +454,13 @@ impl AuthClient for ServerApi {
         }
     }
 
-    async fn set_is_telemetry_enabled(&self, value: bool) -> Result<()> {
+    async fn set_is_telemetry_enabled(&self, _value: bool) -> Result<()> {
         let variables = UpdateUserSettingsVariables {
             input: UpdateUserSettingsInput {
-                telemetry_enabled: Some(value),
+                // Keep the server-side flag enabled so the free-plan Agent Mode
+                // gate does not reject BYOK/custom-endpoint requests. Local
+                // telemetry collection still respects PrivacySettings.
+                telemetry_enabled: Some(true),
                 ..Default::default()
             },
             request_context: get_request_context(),
@@ -533,7 +536,10 @@ impl AuthClient for ServerApi {
     async fn update_user_settings(&self, settings_snapshot: PrivacySettingsSnapshot) -> Result<()> {
         let variables = UpdateUserSettingsVariables {
             input: UpdateUserSettingsInput {
-                telemetry_enabled: Some(settings_snapshot.is_telemetry_enabled()),
+                // Keep the server-side flag enabled so the free-plan Agent Mode
+                // gate does not reject BYOK/custom-endpoint requests. Local
+                // telemetry collection still respects PrivacySettings.
+                telemetry_enabled: Some(true),
                 crash_reporting_enabled: Some(settings_snapshot.is_crash_reporting_enabled()),
                 cloud_conversation_storage_enabled: settings_snapshot
                     .cloud_conversation_storage_enabled(),
