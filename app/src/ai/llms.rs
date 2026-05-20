@@ -20,7 +20,6 @@ use crate::{
 };
 
 use ai::api_keys::{ApiKeyManager, ApiKeyManagerEvent, CustomEndpoint, CustomEndpointModel};
-use warp_core::features::FeatureFlag;
 
 use super::execution_profiles::profiles::AIExecutionProfilesModel;
 
@@ -825,7 +824,7 @@ impl LLMPreferences {
             .flatten()
     }
 
-    /// Iterator over the user's custom-endpoint LLMs, gated on the feature flag and entitlement.
+    /// Iterator over the user's custom-endpoint LLMs, gated on entitlement.
     pub fn custom_llm_choices(&self, app: &AppContext) -> std::slice::Iter<'_, LLMInfo> {
         if Self::custom_inference_enabled(app) {
             self.custom_llms.iter()
@@ -837,8 +836,7 @@ impl LLMPreferences {
     }
 
     fn custom_inference_enabled(app: &AppContext) -> bool {
-        FeatureFlag::CustomInferenceEndpoints.is_enabled()
-            && UserWorkspaces::as_ref(app).is_custom_inference_enabled(app)
+        UserWorkspaces::as_ref(app).is_custom_inference_enabled(app)
     }
 
     /// Reads the user's current `ApiKeyManager.custom_endpoints` and replaces `custom_llms`

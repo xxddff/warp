@@ -3,10 +3,10 @@ name: Build Warp macOS OSS App
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: Warp tag to build
+      ref:
+        description: Git ref to build
         required: true
-        default: v0.2026.05.20.09.21.stable_00
+        default: master
 
 permissions:
   contents: read
@@ -25,8 +25,7 @@ jobs:
       - name: Checkout Warp source
         uses: actions/checkout@v4
         with:
-          repository: warpdotdev/warp
-          ref: ${{ inputs.tag }}
+          ref: ${{ inputs.ref }}
           lfs: true
 
       - name: Show runner environment
@@ -70,5 +69,5 @@ jobs:
       - name: Upload app artifact
         uses: actions/upload-artifact@v4
         with:
-          name: WarpOss.app-${{ inputs.tag }}
+          name: WarpOss.app-${{ inputs.ref }}
           path: WarpOss.app.zip
